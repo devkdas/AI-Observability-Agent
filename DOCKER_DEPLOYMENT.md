@@ -6,11 +6,9 @@
 #### Development Mode (Fastest)
 ```bash
 # Clone and navigate to project
-git clone <your-repo-url>
-cd copadocon-2025
+git clone https://github.com/devkdas/AI-Observability-Agent.git
+cd AI-Observability-Agent
 
-# Copy environment file
-cp .env.example .env
 # Edit .env with your API keys
 
 # Run development container
