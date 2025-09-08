@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # AI-Powered Observability Agent with Quantum Analytics - Development Mode
+  observability-agent-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quantum-ai-observability-agent-dev
+    ports:
+      - "8000:8000"
+    environment:
+      # Copado Configuration
+      - COPADO_API_URL=${COPADO_API_URL:-https://api.copado.com}
+      - COPADO_AI_API_KEY=${COPADO_AI_API_KEY}
+      - COPADO_CICD_API_KEY=${COPADO_CICD_API_KEY}
+      
+      # Salesforce Configuration
+      - SALESFORCE_INSTANCE_URL=${SALESFORCE_INSTANCE_URL}
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET}
+      
+      # GitHub Configuration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      
+      # Notification Configuration
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
+      
+      # Application Configuration
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - DEBUG=true
+      - DATABASE_URL=sqlite:///./data/observability_agent.db
+      
+      # Quantum Analytics Development Configuration
+      - QUANTUM_CACHE_SIZE=500
+      - ML_MODEL_PATH=/app/ml_models
+      - ENABLE_QUANTUM_ANALYTICS=true
+      - QUANTUM_DEBUG_MODE=true
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./quantum_cache:/app/quantum_cache
+      - ./ml_models:/app/ml_models
+    networks:
+      - dev-network
+    restart: unless-stopped
+    command: python main.py
+
+networks:
+  dev-network:
+    driver: bridge

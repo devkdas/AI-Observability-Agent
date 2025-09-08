@@ -1,0 +1,81 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version to test with'
+        required: false
+        default: '3.12'
+        type: choice
+        options:
+        - '3.11'
+        - '3.12'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.python_version)) || fromJSON('["3.11", "3.12"]') }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create test environment file
+      run: |
+        echo "TESTING=true" > .env
+        echo "COPADO_SANDBOX_URL=https://test-sandbox.my.salesforce.com" >> .env
+        echo "COPADO_SANDBOX_API_KEY=test_api_key" >> .env
+        echo "COPADO_AI_API_URL=https://copadogpt-api.robotic.copado.com" >> .env
+        echo "COPADO_AI_API_KEY=test_ai_api_key" >> .env
+        echo "COPADO_AI_ORG_ID=12345" >> .env
+        echo "COPADO_AI_WORKSPACE_ID=test-workspace-id" >> .env
+        echo "JIRA_BASE_URL=https://test-domain.atlassian.net" >> .env
+        echo "JIRA_API_TOKEN=test_jira_token" >> .env
+        echo "JIRA_EMAIL=test@example.com" >> .env
+        echo "JIRA_PROJECT_KEY=TEST" >> .env
+        echo "GITHUB_TOKEN=test_github_token" >> .env
+        echo "GITHUB_REPO=test/repo" >> .env
+        echo "DATABASE_URL=sqlite:///./test_observability_agent.db" >> .env
+        echo "APP_HOST=0.0.0.0" >> .env
+        echo "APP_PORT=8000" >> .env
+        echo "DEBUG=false" >> .env
+    
+    - name: Run tests with pytest
+      run: |
+        pytest --cov-report=xml --cov-report=term-missing
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+    
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.12'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Observability Agent - CopadoCon 2025</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #8b5cf6 75%, #a855f7 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.5" fill="%23ffffff" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            z-index: 2;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.08);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 200%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .header h1 {
+            color: #1e293b;
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        
+        .ai-stat {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .ai-stat::before {
+            background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.6), rgba(255,255,255,0.3));
+        }
+        
+        .prediction-stat {
+            background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .prediction-stat::before {
+            background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.6), rgba(255,255,255,0.3));
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+        
+        .ai-stat .stat-label,
+        .prediction-stat .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            opacity: 1;
+        }
+        
+        .critical { color: #e53e3e; }
+        .high { color: #dd6b20; }
+        .medium { color: #d69e2e; }
+        .low { color: #38a169; }
+        
+        .incidents-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-title::before {
+            content: '\f0e8';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: #3b82f6;
+            font-size: 1.2rem;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn::before {
+            content: '\f021';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        }
+        
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .incident-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .incident-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .incident-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .incident-card:hover::before {
+            opacity: 1;
+        }
+        
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .incident-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .incident-meta {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+        
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        /* Smaller badges for modal */
+        .modal-content .severity-badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        
+        .severity-critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .severity-high {
+            background: #feebc8;
+            color: #c05621;
+        }
+        
+        .severity-medium {
+            background: #fefcbf;
+            color: #b7791f;
+        }
+        
+        .severity-low {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        /* Smaller status badges for modal */
+        .modal-content .status-badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+        
+        .status-active {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+        
+        .status-resolved {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .incident-description {
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .incident-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .action-badge {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .prediction-badge {
+            background: #f093fb;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .confidence-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #64748b;
+            font-size: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .loading::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-incidents {
+            text-align: center;
+            padding: 60px;
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .no-incidents::before {
+            content: '\f0e8';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 3rem;
+            color: #cbd5e1;
+            opacity: 0.5;
+        }
+        
+        .incident-card {
+            cursor: pointer;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            margin: 3% auto;
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 95%;
+            max-width: 1100px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 40px 120px rgba(0,0,0,0.25), 0 16px 60px rgba(0,0,0,0.15);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(60px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            position: relative;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            text-overflow: unset;
+            overflow: unset;
+            width: calc(100% - 50px);
+            display: block;
+            padding-right: 10px;
+            max-width: none;
+            text-align: left;
+        }
+        
+        .close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            color: #718096;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close:hover {
+            color: #2d3748;
+        }
+        
+        .detail-section {
+            margin-bottom: 25px;
+        }
+        
+        .detail-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .detail-content {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .json-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .insight-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .insight-item {
+            background: white;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI-Powered Observability Agent</h1>
+            <p>CopadoCon 2025 Hackathon - Real-time Incident Detection & Analysis</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-incidents">0</div>
+                <div class="stat-label"><i class="fas fa-exclamation-triangle"></i> Total Incidents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-incidents">0</div>
+                <div class="stat-label"><i class="fas fa-play-circle"></i> Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="resolved-incidents">0</div>
+                <div class="stat-label"><i class="fas fa-check-circle"></i> Resolved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-resolution-time">--</div>
+                <div class="stat-label"><i class="fas fa-clock"></i> Avg Resolution</div>
+            </div>
+            <div class="stat-card ai-stat">
+                <div class="stat-number" id="ai-confidence">--</div>
+                <div class="stat-label"><i class="fas fa-brain"></i> AI Confidence</div>
+            </div>
+            <div class="stat-card prediction-stat">
+                <div class="stat-number" id="predicted-mttr">--</div>
+                <div class="stat-label"><i class="fas fa-crystal-ball"></i> Predicted MTTR</div>
+            </div>
+        </div>
+        
+        <div class="incidents-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Incidents</h2>
+                <button class="refresh-btn" onclick="loadIncidents()">Refresh</button>
+            </div>
+            
+            <div id="incidents-container">
+                <div class="loading">Loading incidents...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incident Details Modal -->
+    <div id="incidentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Incident Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let incidents = [];
+        
+        async function loadIncidents() {
+            try {
+                const response = await fetch('/api/incidents');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                // Handle both array response and object with incidents key
+                incidents = Array.isArray(data) ? data : (data.incidents || []);
+                await loadStats();
+                renderIncidents();
+            } catch (error) {
+                console.error('Failed to load incidents:', error);
+                document.getElementById('incidents-container').innerHTML = 
+                    `<div class="no-incidents">Failed to load incidents: ${error.message}</div>`;
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const stats = await response.json();
+                updateStatsDisplay(stats);
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+                // Fallback to calculating stats from incidents
+                updateStats();
+            }
+        }
+        
+        function updateStatsDisplay(stats) {
+            // Update main statistics
+            document.getElementById('total-incidents').textContent = stats.total_incidents;
+            document.getElementById('active-incidents').textContent = stats.active_incidents;
+            document.getElementById('resolved-incidents').textContent = stats.resolved_incidents;
+            const avgResolutionElement = document.getElementById('avg-resolution-time');
+            if (stats.avg_resolution_time === "No resolved incidents") {
+                avgResolutionElement.textContent = "0 min";
+                avgResolutionElement.style.fontSize = "0.9rem";
+                avgResolutionElement.style.color = "#718096";
+            } else {
+                avgResolutionElement.textContent = stats.avg_resolution_time;
+                avgResolutionElement.style.fontSize = "";
+                avgResolutionElement.style.color = "";
+            }
+            document.getElementById('ai-confidence').textContent = stats.avg_ai_confidence;
+            document.getElementById('predicted-mttr').textContent = stats.predicted_mttr;
+        }
+        
+        function updateStats() {
+            const stats = {
+                total: 0,
+                active: 0,
+                resolved: 0,
+                avgResolutionTime: '--'
+            };
+            
+            incidents.forEach(incident => {
+                stats.total++;
+                if (incident.status === 'open') {
+                    stats.active++;
+                } else if (incident.status === 'resolved') {
+                    stats.resolved++;
+                }
+            });
+            
+            // Update statistics
+            document.getElementById('total-incidents').textContent = stats.total;
+            document.getElementById('active-incidents').textContent = stats.active;
+            document.getElementById('resolved-incidents').textContent = stats.resolved;
+            
+            // Update AI statistics
+            const aiIncidents = incidents.filter(i => i.ai_analysis);
+            if (aiIncidents.length > 0) {
+                const avgConfidence = aiIncidents.reduce((sum, i) => 
+                    sum + (i.ai_analysis.confidence || 0), 0) / aiIncidents.length;
+                document.getElementById('ai-confidence').textContent = 
+                    Math.round(avgConfidence * 100) + '%';
+                
+                const predictedMTTRs = aiIncidents
+                    .map(i => i.ai_analysis.mttr_estimate)
+                    .filter(mttr => mttr && mttr !== 'unknown');
+                if (predictedMTTRs.length > 0) {
+                    document.getElementById('predicted-mttr').textContent = 
+                        predictedMTTRs[0]; // Show most recent prediction
+                }
+            }
+        }
+        
+        function renderIncidents() {
+            const container = document.getElementById('incidents-container');
+            
+            if (incidents.length === 0) {
+                container.innerHTML = '<div class="no-incidents">No incidents detected yet.</div>';
+                return;
+            }
+            
+            const incidentCards = incidents
+                .sort((a, b) => new Date(b.detected_at || b.timestamp) - new Date(a.detected_at || a.timestamp))
+                .map(incident => createIncidentCard(incident))
+                .join('');
+            
+            container.innerHTML = incidentCards;
+        }
+        
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - time) / 1000);
+            
+            // Calculate real time difference
+            if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        }
+        
+        function createIncidentCard(incident) {
+            const timeAgo = getTimeAgo(incident.detected_at || incident.timestamp);
+            const actionsBadges = incident.actions_taken
+                ? incident.actions_taken.map(action => 
+                    `<span class="action-badge">${action.action_type}</span>`
+                  ).join('')
+                : '';
+            
+            return `
+                <div class="incident-card" onclick="showIncidentDetails('${incident.id}')">
+                    <div class="incident-header">
+                        <div class="incident-meta">
+                            <span class="incident-source">${incident.source}</span>
+                            <span class="incident-time">${timeAgo}</span>
+                            ${incident.ai_analysis && incident.ai_analysis.predicted_impact ? 
+                                `<span class="prediction-badge">Impact: ${incident.ai_analysis.predicted_impact}</span>` : ''}
+                            ${incident.ai_analysis && incident.ai_analysis.confidence ? 
+                                `<span class="confidence-badge">${Math.round(incident.ai_analysis.confidence * 100)}% confident</span>` : ''}
+                        </div>
+                        <div>
+                            <span class="severity-badge severity-${incident.severity}">${incident.severity}</span>
+                            <span class="status-badge status-${incident.status === 'resolved' ? 'resolved' : 'active'}">
+                                ${incident.status === 'resolved' ? 'Resolved' : 'In Progress'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="incident-description">${incident.description}</div>
+                    
+                    ${incident.root_cause ? `
+                        <div style="margin-bottom: 15px;">
+                            <strong>Root Cause:</strong> ${incident.root_cause}
+                            ${incident.confidence_score ? `<em>(${Math.round(incident.confidence_score * 100)}% confidence)</em>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    ${actionsBadges ? `
+                        <div class="incident-actions">
+                            <strong>Actions:</strong> ${actionsBadges}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        function showIncidentDetails(incidentId) {
+            const incident = incidents.find(inc => inc.id === incidentId);
+            if (!incident) return;
+            
+            // Use the incident description as the modal title - force full display
+            const modalTitle = incident.title || incident.description || 'Incident Details';
+            console.log('Full incident title:', modalTitle, 'Length:', modalTitle.length);
+            const titleElement = document.getElementById('modalTitle');
+            titleElement.innerHTML = '';
+            titleElement.style.cssText = 'font-size: 1.2rem; font-weight: 600; color: #2d3748; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.5; white-space: normal; text-overflow: unset; overflow: visible; width: calc(100% - 50px); display: block; padding-right: 10px; max-width: none; text-align: left;';
+            titleElement.appendChild(document.createTextNode(modalTitle));
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-title">Basic Information</div>
+                    <div class="detail-content">
+                        <p><strong>ID:</strong> ${incident.id}</p>
+                        <p><strong>Source:</strong> ${incident.source}</p>
+                        <p><strong>Severity:</strong> <span class="severity-badge severity-${incident.severity}">${incident.severity}</span></p>
+                        <p><strong>Status:</strong> <span class="status-badge status-${incident.status === 'resolved' ? 'resolved' : 'active'}">${incident.status === 'resolved' ? 'Resolved' : 'In Progress'}</span></p>
+                        <p><strong>Detected At:</strong> ${new Date(incident.detected_at || incident.timestamp).toLocaleString()}</p>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-title">AI Analysis</div>
+                    <div class="detail-content">
+                        <p><strong>Root Cause:</strong> ${incident.root_cause || 'Analysis in progress...'}</p>
+                        <p><strong>Confidence Score:</strong> ${incident.confidence_score ? Math.round(incident.confidence_score * 100) + '%' : 'N/A'}</p>
+                        ${incident.ai_analysis && incident.ai_analysis.predicted_impact ? 
+                            `<p><strong>Predicted Impact:</strong> ${incident.ai_analysis.predicted_impact}</p>` : ''}
+                        ${incident.ai_analysis && incident.ai_analysis.mttr_estimate ? 
+                            `<p><strong>Estimated MTTR:</strong> ${incident.ai_analysis.mttr_estimate}</p>` : ''}
+                    </div>
+                </div>
+                
+                ${incident.suggested_actions && incident.suggested_actions.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-title">Suggested Actions</div>
+                        <div class="detail-content">
+                            <ul class="insight-list">
+                                ${incident.suggested_actions.map(action => `<li class="insight-item">${action}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${incident.actions_taken && incident.actions_taken.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-title">Actions Taken</div>
+                        <div class="detail-content">
+                            <ul class="insight-list">
+                                ${incident.actions_taken.map(action => 
+                                    `<li class="insight-item">
+                                        <strong>${action.action_type}:</strong> ${action.description}
+                                        <span class="status-badge status-${action.status === 'success' ? 'resolved' : 'active'}">${action.status}</span>
+                                    </li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${incident.ml_insights && incident.ml_insights.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-title">ML Insights</div>
+                        <div class="detail-content">
+                            <ul class="insight-list">
+                                ${incident.ml_insights.map(insight => `<li class="insight-item">${insight}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${incident.copado_insights && incident.copado_insights.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-title">Copado Intelligence</div>
+                        <div class="detail-content">
+                            <ul class="insight-list">
+                                ${incident.copado_insights.map(insight => `<li class="insight-item">${insight}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${incident.quantum_insights && incident.quantum_insights.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-title">Quantum Analysis</div>
+                        <div class="detail-content">
+                            <ul class="insight-list">
+                                ${incident.quantum_insights.map(insight => `<li class="insight-item">${insight}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('incidentModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('incidentModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('incidentModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // Load incidents on page load
+        loadIncidents();
+        
+        // Auto-refresh every 15 seconds for real-time demo
+        setInterval(loadIncidents, 15000);
+        
+        // Add live demo mode indicator
+        const demoIndicator = document.createElement('div');
+        demoIndicator.innerHTML = '<i class="fas fa-satellite-dish"></i> LIVE DEMO MODE - Auto-refresh: 15s';
+        demoIndicator.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+        document.body.appendChild(demoIndicator);
+        
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.7; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
