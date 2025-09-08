@@ -12,11 +12,11 @@
 
 ```bash
 # Clone and run in 3 commands
-git clone <repository-url>
-cd copadocon-2025
+git clone https://github.com/devkdas/AI-Observability-Agent.git
+cd AI-Observability-Agent
 pip install -r requirements.txt
 python main.py
-# Visit http://localhost:8000/advanced-dashboard
+# Visit http://localhost:8000/dashboard
 ```
 
 ## The Problem We're Solving
